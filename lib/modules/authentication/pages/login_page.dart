@@ -1,0 +1,133 @@
+import 'dart:convert';
+
+import 'package:davipel_comex/providers/user_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
+
+import '../../../constants/routing_constants.dart';
+import '../../../services/process_notification_service.dart';
+import '../controller/authentication_controller.dart';
+
+class LoginPage extends StatelessWidget {
+  final TextEditingController email = TextEditingController();
+  final TextEditingController password = TextEditingController();
+
+  LoginPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo
+              Image.asset(
+                'assets/images/logo.png', // Add your logo to assets and reference it here
+                width: 250,
+                fit: BoxFit.cover
+              ),
+              const SizedBox(height: 20),
+
+              // Tagline
+              Text(
+                'Login to continue',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+
+              // Email Field
+              TextField(
+                controller: email,
+                decoration: InputDecoration(
+                  hintText: 'Email',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Password Field
+              TextField(
+                controller: password,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: 'Password',
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(5.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Login Button
+              ElevatedButton(
+                onPressed: () async {
+                  ProcessNotificationService.startLoading(context);
+                  try {
+                    Response response = await AuthenticationController()
+                        .auth(email.text, password.text);
+                    ProcessNotificationService.stopLoading(context);
+                    if (response.statusCode == 200) {
+                      Provider.of<UserProvider>(context, listen: false).user =
+                      await AuthenticationController().retrieveUserData();
+                      Navigator.of(context).pushReplacementNamed(RoutingConstants.dashboard);
+                    }
+                    ProcessNotificationService.error(context, jsonDecode(response.body)['message']);
+                  } on Exception catch (e) {
+                    ProcessNotificationService.error(context, '$e');
+                  }
+                },
+                child: Text(
+                  'Login',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Links
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {},
+                    child: Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
